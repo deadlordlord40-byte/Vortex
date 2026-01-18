@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LuxeVault | Admin Panel</title>
+    <title>LuxeVault | Premium Store</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -11,13 +11,11 @@
     <style>
         :root {
             --gold: #FFD700;
-            --gold-dark: #D4AF37;
             --black: #0F0F0F;
+            --white: #FFFFFF;
             --gray: #1A1A1A;
-            --white: #F5F5F5;
             --red: #FF3B30;
             --green: #34C759;
-            --blue: #007AFF;
         }
         
         * {
@@ -35,7 +33,7 @@
         
         /* HEADER */
         .header {
-            background: var(--black);
+            background: #111;
             padding: 15px 5%;
             display: flex;
             justify-content: space-between;
@@ -47,6 +45,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            cursor: pointer;
         }
         
         .logo i {
@@ -60,144 +59,123 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            font-weight: 800;
         }
         
-        /* TABS */
-        .tabs {
+        /* USER INFO */
+        .user-info {
             display: flex;
+            align-items: center;
             gap: 15px;
-            background: var(--gray);
-            padding: 15px 5%;
-            overflow-x: auto;
         }
         
-        .tab {
-            padding: 10px 20px;
-            background: #2A2A2A;
-            border: 1px solid #444;
-            color: #ccc;
-            border-radius: 6px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        
-        .tab.active {
-            background: var(--gold);
-            color: var(--black);
-            border-color: var(--gold);
-        }
-        
-        /* CONTAINER */
-        .container {
-            padding: 20px 5%;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, var(--gold), #FFED4E);
+            border-radius: 50%;
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: black;
+            overflow: hidden;
         }
         
-        .card {
-            background: #1E1E1E;
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid #333;
-            flex: 1;
-            min-width: 300px;
-        }
-        
-        .card-title {
-            color: var(--gold);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--gold);
-        }
-        
-        /* FORMS */
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #ccc;
-        }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
+        .user-avatar img {
             width: 100%;
-            padding: 10px;
-            background: #2A2A2A;
-            border: 1px solid #444;
-            border-radius: 5px;
-            color: white;
+            height: 100%;
+            object-fit: cover;
         }
         
+        /* BUTTONS */
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             transition: 0.3s;
         }
         
         .btn-primary {
             background: var(--gold);
-            color: var(--black);
+            color: black;
         }
         
         .btn-primary:hover {
             background: #FFED4E;
         }
         
-        .btn-danger {
+        /* PRODUCTS */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px 5%;
+        }
+        
+        .product-card {
+            background: #1E1E1E;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #333;
+            transition: 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--gold);
+        }
+        
+        .product-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        
+        .product-info {
+            padding: 15px;
+        }
+        
+        .product-title {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: white;
+        }
+        
+        .product-price {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--gold);
+            margin: 10px 0;
+        }
+        
+        /* CART */
+        .cart-btn {
+            position: relative;
+            font-size: 24px;
+            color: var(--gold);
+            cursor: pointer;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
             background: var(--red);
             color: white;
-        }
-        
-        .btn-success {
-            background: var(--green);
-            color: white;
-        }
-        
-        /* TABLES */
-        .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th {
-            background: #2A2A2A;
-            padding: 12px;
-            text-align: left;
-            border-bottom: 2px solid var(--gold);
-        }
-        
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #333;
-        }
-        
-        /* STATUS BADGES */
-        .status {
-            padding: 5px 10px;
-            border-radius: 4px;
             font-size: 12px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: bold;
         }
         
-        .pending { background: #FFA500; color: black; }
-        .processing { background: #007AFF; color: white; }
-        .completed { background: #34C759; color: white; }
-        .cancelled { background: #FF3B30; color: white; }
-        
-        /* LOGIN MODAL */
+        /* MODAL */
         .modal {
             display: none;
             position: fixed;
@@ -212,8 +190,8 @@
         }
         
         .modal-content {
-            background: #1E1E1E;
-            padding: 40px;
+            background: #222;
+            padding: 30px;
             border-radius: 10px;
             border: 2px solid var(--gold);
             max-width: 400px;
@@ -240,158 +218,135 @@
         .google-btn:hover {
             background: #f5f5f5;
         }
+        
+        /* ORDERS */
+        .orders-container {
+            padding: 20px 5%;
+        }
+        
+        .order-card {
+            background: #1E1E1E;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--gold);
+        }
     </style>
 </head>
 <body>
     <!-- HEADER -->
     <div class="header">
-        <div class="logo">
-            <i class="fas fa-crown"></i>
-            <h1>LuxeVault Admin</h1>
+        <div class="logo" onclick="showHome()">
+            <i class="fas fa-gem"></i>
+            <h1>LuxeVault</h1>
         </div>
-        <div id="userInfo" style="display: none;">
-            <span id="userName"></span>
-            <button class="btn btn-danger" onclick="logout()" style="margin-left: 15px;">Logout</button>
+        
+        <div class="user-info">
+            <div id="userDisplay" style="display: none;">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span id="userName">User</span>
+            </div>
+            
+            <div class="cart-btn" onclick="openCart()">
+                <i class="fas fa-shopping-cart"></i>
+                <div class="cart-count">0</div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="toggleLogin()" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
         </div>
-        <button class="btn btn-primary" onclick="openLoginModal()" id="loginBtn">Login</button>
     </div>
     
-    <!-- TABS -->
-    <div class="tabs">
-        <div class="tab active" onclick="showTab('products')">Products</div>
-        <div class="tab" onclick="showTab('orders')">Orders</div>
-        <div class="tab" onclick="showTab('messages')">Customer Messages</div>
-        <div class="tab" onclick="showTab('addProduct')">Add Product</div>
-        <div class="tab" onclick="showTab('settings')">Settings</div>
+    <!-- HOME -->
+    <div id="homePage">
+        <div style="text-align: center; padding: 50px 5%;">
+            <h1 style="font-size: 48px; margin-bottom: 20px; color: var(--gold);">Welcome to LuxeVault</h1>
+            <p style="font-size: 18px; color: #ccc; max-width: 600px; margin: 0 auto 30px;">
+                Premium products for everyone. Login with Google to start shopping.
+            </p>
+            <button class="btn btn-primary" onclick="showProducts()" style="padding: 15px 30px; font-size: 18px;">
+                <i class="fas fa-shopping-bag"></i> Start Shopping
+            </button>
+        </div>
     </div>
     
-    <!-- MAIN CONTENT -->
-    <div class="container">
-        <!-- PRODUCTS TAB -->
-        <div id="productsTab" class="tab-content">
-            <div class="card">
-                <h2 class="card-title">All Products</h2>
-                <div class="table-container">
-                    <table id="productsTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Image</th>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Products will load here -->
-                        </tbody>
-                    </table>
-                </div>
+    <!-- PRODUCTS -->
+    <div id="productsPage" style="display: none;">
+        <div class="products-grid" id="productsGrid">
+            <!-- Products load here -->
+        </div>
+    </div>
+    
+    <!-- ORDERS -->
+    <div id="ordersPage" style="display: none;">
+        <div class="orders-container">
+            <h2 style="color: var(--gold); margin-bottom: 20px;">My Orders</h2>
+            <div id="ordersList">
+                <p style="text-align: center; color: #888; padding: 40px;">Login to see your orders</p>
             </div>
         </div>
-        
-        <!-- ORDERS TAB -->
-        <div id="ordersTab" class="tab-content" style="display: none;">
-            <div class="card">
-                <h2 class="card-title">Customer Orders</h2>
-                <div class="table-container">
-                    <table id="ordersTable">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Customer</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Orders will load here -->
-                        </tbody>
-                    </table>
+    </div>
+    
+    <!-- CART MODAL -->
+    <div class="modal" id="cartModal">
+        <div class="modal-content">
+            <h2 style="color: var(--gold); margin-bottom: 20px;">Your Cart</h2>
+            <div id="cartItems"></div>
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
+                <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold;">
+                    <span>Total:</span>
+                    <span id="cartTotal">₹0</span>
                 </div>
+                <button class="btn btn-primary" onclick="checkout()" style="width: 100%; margin-top: 20px;">
+                    <i class="fas fa-credit-card"></i> Checkout
+                </button>
             </div>
-        </div>
-        
-        <!-- MESSAGES TAB -->
-        <div id="messagesTab" class="tab-content" style="display: none;">
-            <div class="card">
-                <h2 class="card-title">Customer Messages</h2>
-                <div id="messagesList">
-                    <!-- Messages will load here -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- ADD PRODUCT TAB -->
-        <div id="addProductTab" class="tab-content" style="display: none;">
-            <div class="card">
-                <h2 class="card-title">Add New Product</h2>
-                <form id="addProductForm">
-                    <div class="form-group">
-                        <label>Product Name</label>
-                        <input type="text" id="productName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="productDesc" rows="3" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Price (₹)</label>
-                        <input type="number" id="productPrice" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Image URL</label>
-                        <input type="text" id="productImage" placeholder="https://example.com/image.jpg">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Product</button>
-                </form>
-            </div>
-        </div>
-        
-        <!-- SETTINGS TAB -->
-        <div id="settingsTab" class="tab-content" style="display: none;">
-            <div class="card">
-                <h2 class="card-title">Admin Settings</h2>
-                <div class="form-group">
-                    <label>Website Policies</label>
-                    <textarea id="policies" rows="6" placeholder="Add your policies here...">1. No refunds, only replacements
-2. If product damaged at delivery and opened in front of delivery boy, immediate return allowed
-3. Contact support within 24 hours for complaints</textarea>
-                </div>
-                <button class="btn btn-success" onclick="savePolicies()">Save Policies</button>
-                
-                <h3 style="margin-top: 30px; color: var(--gold);">Reply to Messages</h3>
-                <div class="form-group">
-                    <label>Select Message</label>
-                    <select id="messageSelect">
-                        <option>Select a message to reply</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Your Reply</label>
-                    <textarea id="adminReply" rows="4"></textarea>
-                </div>
-                <button class="btn btn-primary" onclick="sendAdminReply()">Send Reply</button>
-            </div>
+            <button class="btn" onclick="closeCart()" style="width: 100%; margin-top: 10px; background: #444; color: white;">
+                Close
+            </button>
         </div>
     </div>
     
     <!-- LOGIN MODAL -->
     <div class="modal" id="loginModal">
         <div class="modal-content">
-            <h2 style="color: var(--gold); margin-bottom: 20px;">Admin Login</h2>
-            <p style="color: #888; margin-bottom: 30px;">Login with Google to access admin panel</p>
+            <h2 style="color: var(--gold); margin-bottom: 10px;">Welcome!</h2>
+            <p style="color: #888; margin-bottom: 30px;">Login with Google to shop</p>
             <button class="google-btn" onclick="googleLogin()">
                 <i class="fab fa-google" style="color: #DB4437;"></i>
                 Sign in with Google
             </button>
-            <p style="margin-top: 20px; color: #666; font-size: 14px;">Only authorized admins can access</p>
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">
+                Your order history will be saved
+            </p>
+        </div>
+    </div>
+    
+    <!-- CHECKOUT MODAL -->
+    <div class="modal" id="checkoutModal" style="display: none;">
+        <div class="modal-content">
+            <h2 style="color: var(--gold); margin-bottom: 20px;">Checkout</h2>
+            <div style="text-align: left;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #ccc; margin-bottom: 5px;">Name</label>
+                    <input type="text" id="checkoutName" style="width: 100%; padding: 10px; background: #333; border: 1px solid #444; color: white; border-radius: 5px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #ccc; margin-bottom: 5px;">Phone</label>
+                    <input type="tel" id="checkoutPhone" style="width: 100%; padding: 10px; background: #333; border: 1px solid #444; color: white; border-radius: 5px;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: #ccc; margin-bottom: 5px;">Address</label>
+                    <textarea id="checkoutAddress" rows="3" style="width: 100%; padding: 10px; background: #333; border: 1px solid #444; color: white; border-radius: 5px;"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="placeOrder()" style="width: 100%;">
+                    <i class="fas fa-check"></i> Confirm Order
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- FIREBASE + MAIN SCRIPT -->
     <script>
         // FIREBASE CONFIG
         const firebaseConfig = {
@@ -408,52 +363,317 @@
         const db = firebase.firestore();
         
         let currentUser = null;
-        const ADMIN_EMAILS = ['deadlord@gmail.com']; // Add your email here
+        let cart = [];
+        let products = [];
 
-        // CHECK AUTH ON LOAD
+        // CHECK LOGIN STATUS
         auth.onAuthStateChanged(user => {
             if (user) {
-                currentUser = user;
-                checkAdminAccess(user.email);
+                currentUser = {
+                    uid: user.uid,
+                    name: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL
+                };
+                updateUserDisplay();
+                loadProducts();
+                loadOrders();
+                
+                // Save user to database
+                db.collection('users').doc(user.uid).set({
+                    name: user.displayName,
+                    email: user.email,
+                    lastLogin: new Date().toISOString()
+                }, { merge: true });
+                
             } else {
-                showLoginModal();
+                currentUser = null;
+                updateUserDisplay();
             }
         });
-
-        // CHECK IF USER IS ADMIN
-        function checkAdminAccess(email) {
-            if (ADMIN_EMAILS.includes(email)) {
-                document.getElementById('userInfo').style.display = 'block';
-                document.getElementById('userName').textContent = email;
-                document.getElementById('loginBtn').style.display = 'none';
-                closeLoginModal();
-                loadAllData();
-            } else {
-                alert('Access denied. Admins only.');
-                logout();
-            }
-        }
 
         // GOOGLE LOGIN
         function googleLogin() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider)
-                .then(result => {
-                    console.log('Login successful');
+                .then(() => {
+                    alert('✅ Login successful!');
+                    closeLoginModal();
                 })
                 .catch(error => {
-                    alert('Login failed: ' + error.message);
+                    alert('❌ Login failed: ' + error.message);
                 });
         }
 
         // LOGOUT
         function logout() {
             auth.signOut();
-            location.reload();
+            alert('Logged out');
         }
 
-        // MODAL CONTROLS
-        function openLoginModal() {
+        // UPDATE USER DISPLAY
+        function updateUserDisplay() {
+            if (currentUser) {
+                document.getElementById('userDisplay').style.display = 'flex';
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('userAvatar').innerHTML = currentUser.photoURL ? 
+                    `<img src="${currentUser.photoURL}" alt="${currentUser.name}">` :
+                    `<span>${currentUser.name.charAt(0)}</span>`;
+                document.getElementById('loginBtn').innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+                document.getElementById('loginBtn').onclick = logout;
+            } else {
+                document.getElementById('userDisplay').style.display = 'none';
+                document.getElementById('loginBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                document.getElementById('loginBtn').onclick = toggleLogin;
+            }
+        }
+
+        // LOAD PRODUCTS
+        async function loadProducts() {
+            try {
+                const snapshot = await db.collection('products').get();
+                products = [];
+                snapshot.forEach(doc => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // If no products, add some defaults
+                if (products.length === 0) {
+                    products = [
+                        {
+                            id: "1",
+                            name: "Golden Watch",
+                            description: "Luxury wrist watch",
+                            price: 12999,
+                            image: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600"
+                        },
+                        {
+                            id: "2",
+                            name: "Leather Wallet",
+                            description: "Premium leather wallet",
+                            price: 2999,
+                            image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w-600"
+                        }
+                    ];
+                }
+                
+                displayProducts();
+            } catch (error) {
+                console.error("Error loading products:", error);
+            }
+        }
+
+        // DISPLAY PRODUCTS
+        function displayProducts() {
+            const container = document.getElementById('productsGrid');
+            container.innerHTML = '';
+            
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <img src="${product.image}" class="product-img" alt="${product.name}">
+                    <div class="product-info">
+                        <h3 class="product-title">${product.name}</h3>
+                        <p style="color: #aaa; font-size: 14px; margin-bottom: 10px;">${product.description}</p>
+                        <div class="product-price">₹${product.price.toLocaleString()}</div>
+                        <button class="btn btn-primary" onclick="addToCart('${product.id}')" style="width: 100%;">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // CART FUNCTIONS
+        function addToCart(productId) {
+            if (!currentUser) {
+                alert('Please login first');
+                toggleLogin();
+                return;
+            }
+            
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                cart.push(product);
+                updateCartCount();
+                alert('Added to cart: ' + product.name);
+            }
+        }
+
+        function updateCartCount() {
+            document.querySelector('.cart-count').textContent = cart.length;
+        }
+
+        function openCart() {
+            const container = document.getElementById('cartItems');
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #888;">Your cart is empty</p>';
+                document.getElementById('cartTotal').textContent = '₹0';
+            } else {
+                let html = '';
+                let total = 0;
+                
+                cart.forEach((item, index) => {
+                    total += item.price;
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #333;">
+                            <div>
+                                <div>${item.name}</div>
+                                <div style="color: var(--gold);">₹${item.price.toLocaleString()}</div>
+                            </div>
+                            <button onclick="removeFromCart(${index})" style="background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                document.getElementById('cartTotal').textContent = '₹' + total.toLocaleString();
+            }
+            
+            document.getElementById('cartModal').style.display = 'flex';
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartCount();
+            openCart();
+        }
+
+        function closeCart() {
+            document.getElementById('cartModal').style.display = 'none';
+        }
+
+        // CHECKOUT
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Your cart is empty');
+                return;
+            }
+            
+            document.getElementById('checkoutModal').style.display = 'flex';
+            document.getElementById('cartModal').style.display = 'none';
+        }
+
+        // PLACE ORDER
+        async function placeOrder() {
+            const name = document.getElementById('checkoutName').value;
+            const phone = document.getElementById('checkoutPhone').value;
+            const address = document.getElementById('checkoutAddress').value;
+            
+            if (!name || !phone || !address) {
+                alert('Please fill all details');
+                return;
+            }
+            
+            try {
+                const orderId = 'ORD' + Date.now();
+                const total = cart.reduce((sum, item) => sum + item.price, 0);
+                
+                await db.collection('orders').doc(orderId).set({
+                    id: orderId,
+                    userId: currentUser.uid,
+                    userName: name,
+                    userEmail: currentUser.email,
+                    userPhone: phone,
+                    address: address,
+                    items: cart,
+                    total: total,
+                    status: 'Pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Clear cart
+                cart = [];
+                updateCartCount();
+                
+                // Close modals
+                document.getElementById('checkoutModal').style.display = 'none';
+                document.getElementById('cartModal').style.display = 'none';
+                
+                alert(`✅ Order #${orderId} placed successfully!`);
+                showOrders();
+                
+            } catch (error) {
+                alert('❌ Error placing order: ' + error.message);
+            }
+        }
+
+        // LOAD ORDERS
+        async function loadOrders() {
+            if (!currentUser) return;
+            
+            const container = document.getElementById('ordersList');
+            container.innerHTML = '<p>Loading orders...</p>';
+            
+            try {
+                const snapshot = await db.collection('orders')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: #888;">No orders yet</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const order = doc.data();
+                    const date = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString() : '';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'order-card';
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <div>
+                                <strong style="color: var(--gold);">Order #${order.id}</strong><br>
+                                <small style="color: #888;">${date}</small>
+                            </div>
+                            <span style="background: ${order.status === 'Delivered' ? 'var(--green)' : '#FFA500'}; color: ${order.status === 'Delivered' ? 'white' : 'black'}; padding: 5px 10px; border-radius: 4px; font-size: 12px;">
+                                ${order.status}
+                            </span>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            ${order.items.map(item => `<div>${item.name} - ₹${item.price}</div>`).join('')}
+                        </div>
+                        <div style="font-weight: bold; color: var(--gold);">
+                            Total: ₹${order.total}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                container.innerHTML = '<p style="text-align: center; color: #888;">Error loading orders</p>';
+            }
+        }
+
+        // PAGE NAVIGATION
+        function showHome() {
+            document.getElementById('homePage').style.display = 'block';
+            document.getElementById('productsPage').style.display = 'none';
+            document.getElementById('ordersPage').style.display = 'none';
+        }
+        
+        function showProducts() {
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('productsPage').style.display = 'block';
+            document.getElementById('ordersPage').style.display = 'none';
+            loadProducts();
+        }
+        
+        function showOrders() {
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('productsPage').style.display = 'none';
+            document.getElementById('ordersPage').style.display = 'block';
+            loadOrders();
+        }
+        
+        // LOGIN MODAL
+        function toggleLogin() {
             document.getElementById('loginModal').style.display = 'flex';
         }
         
@@ -461,276 +681,17 @@
             document.getElementById('loginModal').style.display = 'none';
         }
         
-        function showLoginModal() {
-            document.getElementById('loginModal').style.display = 'flex';
-        }
-
-        // TAB CONTROLS
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = 'none';
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.getElementById(tabName + 'Tab').style.display = 'block';
-            event.target.classList.add('active');
-            
-            if (tabName === 'products') loadProducts();
-            if (tabName === 'orders') loadOrders();
-            if (tabName === 'messages') loadMessages();
-        }
-
-        // LOAD ALL DATA
-        function loadAllData() {
-            loadProducts();
-            loadOrders();
-            loadMessages();
-        }
-
-        // LOAD PRODUCTS
-        async function loadProducts() {
-            const tbody = document.querySelector('#productsTable tbody');
-            tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
-            
-            try {
-                const snapshot = await db.collection('products').get();
-                tbody.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5">No products found</td></tr>';
-                    return;
-                }
-                
-                snapshot.forEach(doc => {
-                    const product = doc.data();
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${doc.id}</td>
-                        <td><img src="${product.image || 'https://via.placeholder.com/50'}" width="50" height="50" style="object-fit: cover; border-radius: 5px;"></td>
-                        <td><strong>${product.name}</strong><br><small>${product.description || ''}</small></td>
-                        <td>₹${product.price.toLocaleString()}</td>
-                        <td>
-                            <button class="btn btn-primary" onclick="editProduct('${doc.id}')" style="padding: 5px 10px; margin-right: 5px;">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteProduct('${doc.id}')" style="padding: 5px 10px;">Delete</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                tbody.innerHTML = '<tr><td colspan="5">Error loading products</td></tr>';
-            }
-        }
-
-        // ADD PRODUCT
-        document.getElementById('addProductForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const product = {
-                name: document.getElementById('productName').value,
-                description: document.getElementById('productDesc').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                image: document.getElementById('productImage').value || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            try {
-                await db.collection('products').add(product);
-                alert('Product added successfully!');
-                document.getElementById('addProductForm').reset();
-                showTab('products');
-            } catch (error) {
-                alert('Error adding product: ' + error.message);
-            }
-        });
-
-        // DELETE PRODUCT
-        async function deleteProduct(productId) {
-            if (confirm('Are you sure you want to delete this product?')) {
-                try {
-                    await db.collection('products').doc(productId).delete();
-                    alert('Product deleted!');
-                    loadProducts();
-                } catch (error) {
-                    alert('Error deleting product');
-                }
-            }
-        }
-
-        // EDIT PRODUCT
-        async function editProduct(productId) {
-            const newName = prompt('Enter new product name:');
-            const newPrice = prompt('Enter new price:');
-            
-            if (newName && newPrice) {
-                try {
-                    await db.collection('products').doc(productId).update({
-                        name: newName,
-                        price: parseFloat(newPrice)
-                    });
-                    alert('Product updated!');
-                    loadProducts();
-                } catch (error) {
-                    alert('Error updating product');
-                }
-            }
-        }
-
-        // LOAD ORDERS
-        async function loadOrders() {
-            const tbody = document.querySelector('#ordersTable tbody');
-            tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
-            
-            try {
-                const snapshot = await db.collection('orders').orderBy('createdAt', 'desc').get();
-                tbody.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="6">No orders found</td></tr>';
-                    return;
-                }
-                
-                snapshot.forEach(doc => {
-                    const order = doc.data();
-                    const date = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString() : 'N/A';
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${order.id || doc.id}</td>
-                        <td>${order.userName || 'N/A'}<br><small>${order.userEmail || ''}</small></td>
-                        <td>₹${order.total?.toLocaleString() || '0'}</td>
-                        <td><span class="status ${order.status?.toLowerCase() || 'pending'}">${order.status || 'Pending'}</span></td>
-                        <td>${date}</td>
-                        <td>
-                            <select onchange="updateOrderStatus('${doc.id}', this.value)" style="padding: 5px; background: #2A2A2A; color: white; border: 1px solid #444; border-radius: 4px;">
-                                <option ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                                <option ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
-                                <option ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                                <option ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                                <option ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                            </select>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                tbody.innerHTML = '<tr><td colspan="6">Error loading orders</td></tr>';
-            }
-        }
-
-        // UPDATE ORDER STATUS
-        async function updateOrderStatus(orderId, status) {
-            try {
-                await db.collection('orders').doc(orderId).update({ status: status });
-                alert('Order status updated to: ' + status);
-                loadOrders();
-            } catch (error) {
-                alert('Error updating order');
-            }
-        }
-
-        // LOAD MESSAGES
-        async function loadMessages() {
-            const container = document.getElementById('messagesList');
-            container.innerHTML = '<p>Loading messages...</p>';
-            
-            try {
-                const snapshot = await db.collection('messages').orderBy('createdAt', 'desc').get();
-                container.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    container.innerHTML = '<p>No messages from customers</p>';
-                    return;
-                }
-                
-                const select = document.getElementById('messageSelect');
-                select.innerHTML = '<option>Select a message to reply</option>';
-                
-                snapshot.forEach(doc => {
-                    const msg = doc.data();
-                    
-                    // Add to dropdown
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = `From: ${msg.userName} - ${msg.message.substring(0, 50)}...`;
-                    select.appendChild(option);
-                    
-                    // Create message card
-                    const card = document.createElement('div');
-                    card.style.cssText = 'background: #2A2A2A; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--gold);';
-                    card.innerHTML = `
-                        <div style="display: flex; justify-content: space-between;">
-                            <div>
-                                <strong>${msg.userName}</strong>
-                                <div style="color: #888; font-size: 14px;">${msg.userEmail} | ${msg.userPhone || 'No phone'}</div>
-                            </div>
-                            <div style="color: #666; font-size: 14px;">${msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleString() : ''}</div>
-                        </div>
-                        <div style="margin-top: 10px; padding: 10px; background: #1A1A1A; border-radius: 5px;">
-                            ${msg.message}
-                        </div>
-                        ${msg.replied ? `
-                            <div style="margin-top: 10px; padding: 10px; background: rgba(0, 122, 255, 0.1); border-left: 3px solid var(--blue);">
-                                <strong>Admin Reply:</strong> ${msg.reply}
-                            </div>
-                        ` : ''}
-                    `;
-                    container.appendChild(card);
-                });
-            } catch (error) {
-                container.innerHTML = '<p>Error loading messages</p>';
-            }
-        }
-
-        // SEND ADMIN REPLY
-        async function sendAdminReply() {
-            const messageId = document.getElementById('messageSelect').value;
-            const reply = document.getElementById('adminReply').value;
-            
-            if (!messageId || messageId === 'Select a message to reply') {
-                alert('Please select a message first');
-                return;
-            }
-            
-            if (!reply.trim()) {
-                alert('Please enter a reply');
-                return;
-            }
-            
-            try {
-                await db.collection('messages').doc(messageId).update({
-                    reply: reply,
-                    replied: true,
-                    replyDate: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                alert('Reply sent successfully!');
-                document.getElementById('adminReply').value = '';
-                loadMessages();
-            } catch (error) {
-                alert('Error sending reply: ' + error.message);
-            }
-        }
-
-        // SAVE POLICIES
-        async function savePolicies() {
-            const policies = document.getElementById('policies').value;
-            try {
-                await db.collection('settings').doc('policies').set({ content: policies });
-                alert('Policies saved!');
-            } catch (error) {
-                alert('Error saving policies');
-            }
-        }
-
         // INITIALIZE
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is already logged in
-            const user = auth.currentUser;
-            if (user) {
-                checkAdminAccess(user.email);
-            }
+            showHome();
+            loadProducts();
+            
+            // Close modals when clicking outside
+            window.onclick = function(event) {
+                if (event.target.className === 'modal') {
+                    event.target.style.display = 'none';
+                }
+            };
         });
     </script>
 </body>
