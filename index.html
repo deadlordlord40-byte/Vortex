@@ -36,7 +36,6 @@
             min-height: 100vh;
         }
         
-        /* Header Styles - Same as before */
         .header {
             background: var(--black);
             padding: 20px 5%;
@@ -455,6 +454,7 @@
         .status-processing { background: var(--blue); color: white; }
         .status-delivered { background: var(--green); color: white; }
         .status-cancelled { background: var(--red); color: white; }
+        .status-accepted { background: #FF9500; color: white; } /* NEW: Accepted status */
         
         .order-items {
             margin: 15px 0;
@@ -850,6 +850,7 @@
                 <div class="filter-buttons">
                     <button class="filter-btn active" onclick="filterOrders('all')">All</button>
                     <button class="filter-btn" onclick="filterOrders('Pending')">Pending</button>
+                    <button class="filter-btn" onclick="filterOrders('Accepted')">Accepted</button>
                     <button class="filter-btn" onclick="filterOrders('Processing')">Processing</button>
                     <button class="filter-btn" onclick="filterOrders('Delivered')">Delivered</button>
                 </div>
@@ -1029,7 +1030,6 @@
 
     <script>
         // ========== FIREBASE CONFIGURATION ==========
-        // ✅ FIXED CONFIG - yeh use karo
         const firebaseConfig = {
             apiKey: "AIzaSyDXd5OXhBIeK6ZgsGac2WApW6b5ctOP138",
             authDomain: "rootandshoot-25366.firebaseapp.com",
@@ -1420,7 +1420,7 @@
             }
             
             try {
-                const orderId = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
+                const orderId = 'ORD' + Date.now();
                 const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
                 
                 const orderData = {
@@ -1440,22 +1440,24 @@
                     })),
                     total: total,
                     status: 'Pending',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: new Date().toISOString(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                console.log("Saving order to Firestore:", orderData);
+                console.log("Saving order:", orderData);
                 
                 // ✅ SAVE ORDER TO FIRESTORE
                 await db.collection('orders').doc(orderId).set(orderData);
-                console.log("Order saved successfully!");
+                console.log("Order saved to Firestore!");
                 
-                // ✅ UPDATE USER ADDRESS
-                await db.collection('users').doc(currentUser.uid).update({
+                // ✅ UPDATE USER INFO
+                await db.collection('users').doc(currentUser.uid).set({
                     phone: phone,
-                    address: address
-                });
+                    address: address,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
                 
-                // ✅ FIXED: CLOSE MODALS FIRST
+                // ✅ CLOSE MODALS
                 closeCheckout();
                 closeCart();
                 
@@ -1470,12 +1472,15 @@
                 // ✅ SHOW SUCCESS MESSAGE
                 showNotification(`Order #${orderId} placed successfully!`);
                 
-                // ✅ LOAD ORDERS
-                loadUserOrders();
+                // ✅ LOAD ORDERS IMMEDIATELY
+                setTimeout(() => {
+                    loadUserOrders();
+                    showPage('orders');
+                }, 500);
                 
             } catch (error) {
                 console.error("Error placing order:", error);
-                showNotification('Error placing order: ' + error.message, 'error');
+                showNotification('Error: ' + error.message, 'error');
             }
         }
 
@@ -1505,7 +1510,7 @@
             }
             
             try {
-                const messageId = 'MSG' + Date.now() + Math.floor(Math.random() * 1000);
+                const messageId = 'MSG' + Date.now();
                 
                 const messageData = {
                     id: messageId,
@@ -1515,42 +1520,56 @@
                     userPhone: phone,
                     message: message,
                     replied: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    reply: '',
+                    createdAt: new Date().toISOString(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                console.log("Saving message to Firestore:", messageData);
+                console.log("Saving message:", messageData);
                 
                 // ✅ SAVE MESSAGE TO FIRESTORE
                 await db.collection('messages').doc(messageId).set(messageData);
-                console.log("Message saved successfully!");
+                console.log("Message saved!");
                 
-                // ✅ FIXED: CLEAR FORM
+                // ✅ CLEAR FORM
                 document.getElementById('contactForm').reset();
                 
-                // ✅ SHOW SUCCESS MESSAGE
                 showNotification('Message sent! Admin will reply soon.');
                 
-                // ✅ LOAD MESSAGES
-                loadUserMessages();
+                // ✅ LOAD MESSAGES IMMEDIATELY
+                setTimeout(() => {
+                    loadUserMessages();
+                    showPage('messages');
+                }, 500);
                 
             } catch (error) {
                 console.error("Error sending message:", error);
-                showNotification('Error sending message: ' + error.message, 'error');
+                showNotification('Error: ' + error.message, 'error');
             }
         }
 
-        // ========== USER DATA FUNCTIONS ==========
-        async function loadUserOrders() {
-            if (!currentUser) return;
+        // ========== LOAD USER ORDERS ==========
+        async function loadUserOrders(filter = 'all') {
+            if (!currentUser) {
+                document.getElementById('ordersContainer').innerHTML = `
+                    <div class="order-card">
+                        <p style="text-align: center; color: #888;">Please login to view orders</p>
+                    </div>
+                `;
+                return;
+            }
             
             const container = document.getElementById('ordersContainer');
             container.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Loading orders...</p>';
             
             try {
+                console.log("Loading orders for user:", currentUser.uid);
+                
                 const snapshot = await db.collection('orders')
                     .where('userId', '==', currentUser.uid)
-                    .orderBy('createdAt', 'desc')
                     .get();
+                
+                console.log("Found orders:", snapshot.size);
                 
                 if (snapshot.empty) {
                     container.innerHTML = `
@@ -1567,17 +1586,48 @@
                 }
                 
                 container.innerHTML = '';
+                
+                // Convert to array
+                const orders = [];
                 snapshot.forEach(doc => {
-                    const order = doc.data();
+                    orders.push(doc.data());
+                });
+                
+                // Sort by date (newest first)
+                orders.sort((a, b) => {
+                    const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                    const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                    return dateB - dateA;
+                });
+                
+                // Apply filter
+                const filteredOrders = filter === 'all' 
+                    ? orders 
+                    : orders.filter(order => order.status === filter);
+                
+                if (filteredOrders.length === 0) {
+                    container.innerHTML = `
+                        <div class="order-card">
+                            <p style="text-align: center; color: #888;">No ${filter} orders found</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Display orders
+                filteredOrders.forEach(order => {
                     const card = document.createElement('div');
                     card.className = 'order-card';
+                    
+                    const date = order.createdAt 
+                        ? new Date(order.createdAt).toLocaleString() 
+                        : 'Recent';
+                    
                     card.innerHTML = `
                         <div class="order-header">
                             <div>
                                 <div style="font-weight: bold; color: var(--gold); font-size: 18px;">Order #${order.id}</div>
-                                <div style="font-size: 14px; color: #888;">
-                                    ${order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString() : 'Just now'}
-                                </div>
+                                <div style="font-size: 14px; color: #888;">${date}</div>
                             </div>
                             <div class="order-status status-${order.status.toLowerCase()}">
                                 ${order.status}
@@ -1610,21 +1660,37 @@
                 
             } catch (error) {
                 console.error("Error loading orders:", error);
-                container.innerHTML = '<div class="order-card"><p style="text-align: center; color: #888;">Error loading orders</p></div>';
+                container.innerHTML = `
+                    <div class="order-card">
+                        <p style="text-align: center; color: var(--red);">Error loading orders</p>
+                        <p style="text-align: center; color: #888; font-size: 14px;">${error.message}</p>
+                    </div>
+                `;
             }
         }
 
+        // ========== LOAD USER MESSAGES ==========
         async function loadUserMessages() {
-            if (!currentUser) return;
+            if (!currentUser) {
+                document.getElementById('messagesContainer').innerHTML = `
+                    <div class="order-card">
+                        <p style="text-align: center; color: #888;">Please login to view messages</p>
+                    </div>
+                `;
+                return;
+            }
             
             const container = document.getElementById('messagesContainer');
             container.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Loading messages...</p>';
             
             try {
+                console.log("Loading messages for user:", currentUser.uid);
+                
                 const snapshot = await db.collection('messages')
                     .where('userId', '==', currentUser.uid)
-                    .orderBy('createdAt', 'desc')
                     .get();
+                
+                console.log("Found messages:", snapshot.size);
                 
                 if (snapshot.empty) {
                     container.innerHTML = `
@@ -1641,17 +1707,33 @@
                 }
                 
                 container.innerHTML = '';
+                
+                // Convert to array
+                const messages = [];
                 snapshot.forEach(doc => {
-                    const msg = doc.data();
+                    messages.push(doc.data());
+                });
+                
+                // Sort by date (newest first)
+                messages.sort((a, b) => {
+                    const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                    const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                    return dateB - dateA;
+                });
+                
+                messages.forEach(msg => {
                     const card = document.createElement('div');
                     card.className = 'order-card';
+                    
+                    const date = msg.createdAt 
+                        ? new Date(msg.createdAt).toLocaleString() 
+                        : 'Recent';
+                    
                     card.innerHTML = `
                         <div class="order-header">
                             <div>
                                 <div style="font-weight: bold; color: var(--gold);">Message #${msg.id}</div>
-                                <div style="font-size: 14px; color: #888;">
-                                    ${msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleString() : 'Just now'}
-                                </div>
+                                <div style="font-size: 14px; color: #888;">${date}</div>
                             </div>
                             <div class="order-status ${msg.replied ? 'status-delivered' : 'status-pending'}">
                                 ${msg.replied ? 'Replied' : 'Pending'}
@@ -1670,14 +1752,24 @@
                                 <strong><i class="fas fa-reply"></i> Admin's Reply:</strong>
                                 <div style="margin-top: 5px; color: #ccc;">${msg.reply || 'Thank you for your message!'}</div>
                             </div>
-                        ` : ''}
+                        ` : `
+                            <div style="margin-top: 15px; padding: 10px; background: rgba(255,215,0,0.05); border-radius: 4px; text-align: center;">
+                                <i class="fas fa-clock" style="color: #888;"></i>
+                                <span style="color: #888; margin-left: 5px;">Waiting for admin reply</span>
+                            </div>
+                        `}
                     `;
                     container.appendChild(card);
                 });
                 
             } catch (error) {
                 console.error("Error loading messages:", error);
-                container.innerHTML = '<div class="order-card"><p style="text-align: center; color: #888;">Error loading messages</p></div>';
+                container.innerHTML = `
+                    <div class="order-card">
+                        <p style="text-align: center; color: var(--red);">Error loading messages</p>
+                        <p style="text-align: center; color: #888; font-size: 14px;">${error.message}</p>
+                    </div>
+                `;
             }
         }
 
