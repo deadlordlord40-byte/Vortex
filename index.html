@@ -20,8 +20,6 @@
             --red: #FF3B30;
             --green: #34C759;
             --blue: #007AFF;
-            --purple: #AF52DE;
-            --teal: #00C7BE;
         }
         
         * {
@@ -461,7 +459,6 @@
         
         .status-pending { background: var(--gold); color: var(--black); }
         .status-processing { background: var(--blue); color: white; }
-        .status-shipped { background: var(--teal); color: white; }
         .status-delivered { background: var(--green); color: white; }
         .status-cancelled { background: var(--red); color: white; }
         
@@ -675,7 +672,6 @@
             to { transform: translateX(0); opacity: 1; }
         }
         
-        /* Auth Modal Styles - GOOGLE ONLY */
         .auth-header {
             text-align: center;
             margin-bottom: 30px;
@@ -782,9 +778,6 @@
                 <div class="user-menu-item" onclick="showPage('messages')">
                     <i class="fas fa-inbox"></i> My Messages
                 </div>
-                <div class="user-menu-item" onclick="openAdminPanel()">
-                    <i class="fas fa-user-shield"></i> Admin Panel
-                </div>
                 <div class="user-menu-item" onclick="logoutUser()">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </div>
@@ -864,7 +857,7 @@
                     <button class="filter-btn active" onclick="filterOrders('all')">All</button>
                     <button class="filter-btn" onclick="filterOrders('Pending')">Pending</button>
                     <button class="filter-btn" onclick="filterOrders('Processing')">Processing</button>
-                    <button class="filter-btn" onclick="filterOrders('Completed')">Completed</button>
+                    <button class="filter-btn" onclick="filterOrders('Delivered')">Delivered</button>
                 </div>
             </div>
             <div class="orders-container" id="ordersContainer">
@@ -927,7 +920,7 @@
         </section>
     </div>
     
-    <!-- Footer (Admin link REMOVED) -->
+    <!-- Footer -->
     <footer class="footer">
         <div style="text-align: center;">
             <p>© 2024 LuxeVault. All rights reserved.</p>
@@ -1148,12 +1141,10 @@
             try {
                 await auth.signInWithPopup(provider);
                 closeAuth();
-                // Notification will be shown by auth state change handler
                 
             } catch (error) {
                 console.error('Google sign-in error:', error);
                 
-                // Handle specific errors
                 if (error.code === 'auth/popup-blocked') {
                     showNotification('Popup blocked by browser. Please allow popups.', 'error');
                 } else if (error.code === 'auth/popup-closed-by-user') {
@@ -1162,7 +1153,6 @@
                     showNotification('Google sign-in failed: ' + error.message, 'error');
                 }
             } finally {
-                // Restore button
                 googleBtn.innerHTML = originalText;
                 googleBtn.disabled = false;
             }
@@ -1192,7 +1182,6 @@
             if (currentUser) {
                 userDetails.style.display = 'flex';
                 
-                // Update avatar
                 const avatar = document.getElementById('userAvatar');
                 if (currentUser.photoURL && currentUser.photoURL.includes('googleusercontent.com')) {
                     avatar.innerHTML = `<img src="${currentUser.photoURL}" alt="${currentUser.name}" onerror="this.onerror=null; this.parentElement.innerHTML='<span>${currentUser.name.charAt(0)}</span>';">`;
@@ -1200,11 +1189,9 @@
                     avatar.innerHTML = `<span>${currentUser.name.charAt(0).toUpperCase()}</span>`;
                 }
                 
-                // Update user info
                 document.getElementById('userName').textContent = currentUser.name;
                 document.getElementById('userEmail').textContent = currentUser.email;
                 
-                // Update login button to logout
                 loginButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
                 loginButton.onclick = logoutUser;
                 
@@ -1223,11 +1210,6 @@
             document.getElementById('userMenu').classList.remove('active');
         }
 
-        function openAdminPanel() {
-            // DIRECT FILE LINK - Works offline
-            window.open('admin.html', '_blank');
-        }
-
         // ========== PRODUCT FUNCTIONS ==========
         async function loadProductsFromFirestore() {
             try {
@@ -1235,7 +1217,6 @@
                 products = [];
                 
                 if (snapshot.empty) {
-                    // No products in database, load defaults
                     loadDefaultProducts();
                     return;
                 }
@@ -1281,15 +1262,6 @@
                     description: "Handcrafted acetate frames with polarized lenses",
                     price: 18999,
                     image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-                    category: "accessories",
-                    inStock: true
-                },
-                {
-                    id: "4",
-                    name: "Premium Leather Wallet",
-                    description: "Full-grain leather with RFID protection",
-                    price: 8999,
-                    image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
                     category: "accessories",
                     inStock: true
                 }
@@ -1355,21 +1327,20 @@
             const product = products.find(p => p.id === productId);
             if (!product) return;
             
-            // Check if product already in cart
             const existingItemIndex = cart.findIndex(item => item.id === productId);
             
             if (existingItemIndex > -1) {
-                // Update quantity
                 cart[existingItemIndex].quantity = (cart[existingItemIndex].quantity || 1) + 1;
             } else {
-                // Add new item
                 cart.push({
-                    ...product,
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.image,
                     quantity: 1
                 });
             }
             
-            // Save to localStorage
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartCount();
             showNotification('Added to cart!');
@@ -1385,9 +1356,11 @@
             const product = products.find(p => p.id === productId);
             if (!product) return;
             
-            // Clear cart and add only this product
             cart = [{
-                ...product,
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.image,
                 quantity: 1
             }];
             
@@ -1481,7 +1454,6 @@
                 return;
             }
             
-            // Build order summary
             let summary = '<h4 style="color: var(--gold); margin-bottom: 15px;">Order Summary:</h4>';
             let total = 0;
             
@@ -1510,7 +1482,6 @@
             
             document.getElementById('orderSummary').innerHTML = summary;
             
-            // Pre-fill user info if available
             if (currentUser) {
                 document.getElementById('customerName').value = currentUser.name;
                 document.getElementById('customerEmail').value = currentUser.email;
@@ -1521,6 +1492,7 @@
 
         function closeCheckout() {
             document.getElementById('checkoutModal').style.display = 'none';
+            document.getElementById('checkoutForm').reset();
         }
 
         async function placeOrder(event) {
@@ -1541,7 +1513,6 @@
             const email = document.getElementById('customerEmail').value.trim();
             const address = document.getElementById('customerAddress').value.trim();
             
-            // Validation
             if (!name || !phone || !email || !address) {
                 showNotification('Please fill all fields', 'error');
                 return;
@@ -1553,13 +1524,9 @@
             }
             
             try {
-                // Generate order ID
                 const orderId = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
-                
-                // Calculate total
                 const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
                 
-                // Prepare order data
                 const orderData = {
                     id: orderId,
                     userId: currentUser.uid,
@@ -1581,31 +1548,24 @@
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                // Save order to Firestore
                 await db.collection('orders').doc(orderId).set(orderData);
                 
-                // Update user's contact info
                 await db.collection('users').doc(currentUser.uid).update({
                     phone: phone,
                     address: address
                 });
                 
-                // Clear cart
                 cart = [];
                 localStorage.removeItem('cart');
                 updateCartCount();
                 
-                // ✅ FIXED: Close checkout modal after order placed
-                document.getElementById('checkoutModal').style.display = 'none';
-                document.getElementById('cartModal').style.display = 'none';
+                closeCheckout();
+                closeCart();
                 
-                // Reset form
                 document.getElementById('checkoutForm').reset();
                 
-                // Show success message
                 showNotification(`Order #${orderId} placed successfully!`);
                 
-                // Load orders page
                 loadUserOrders();
                 
             } catch (error) {
@@ -1759,14 +1719,11 @@
                             <div class="admin-reply">
                                 <strong><i class="fas fa-reply"></i> Admin's Reply:</strong>
                                 <div style="margin-top: 5px; color: #ccc;">${msg.reply || 'No reply content'}</div>
-                                ${msg.replySubject ? `
+                                ${msg.replyDate ? `
                                     <div style="font-size: 12px; color: #888; margin-top: 5px;">
-                                        Subject: ${msg.replySubject}
+                                        Replied on: ${msg.replyDate.toDate().toLocaleString()}
                                     </div>
                                 ` : ''}
-                                <div style="font-size: 12px; color: #888; margin-top: 5px;">
-                                    Replied on: ${msg.replyDate?.toDate().toLocaleString()}
-                                </div>
                             </div>
                         ` : `
                             <div style="margin-top: 15px; padding: 10px; background: rgba(255,215,0,0.05); border-radius: 4px; text-align: center;">
@@ -1791,11 +1748,9 @@
             container.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">Loading profile...</p>';
             
             try {
-                // Get user data from Firestore
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
                 const userData = userDoc.data();
                 
-                // Get user's orders
                 const ordersSnapshot = await db.collection('orders')
                     .where('userId', '==', currentUser.uid)
                     .get();
@@ -1808,7 +1763,6 @@
                     totalSpent += order.total || 0;
                 });
                 
-                // Get user's messages
                 const messagesSnapshot = await db.collection('messages')
                     .where('userId', '==', currentUser.uid)
                     .get();
@@ -1879,7 +1833,6 @@
             const phone = document.getElementById('contactPhone').value.trim();
             const message = document.getElementById('contactMessage').value.trim();
             
-            // Validation
             if (!name || !email || !phone || !message) {
                 showNotification('Please fill all fields', 'error');
                 return;
@@ -1902,19 +1855,16 @@
                     message: message,
                     replied: false,
                     reply: '',
-                    replySubject: '',
                     replyDate: null,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
                 await db.collection('messages').doc(messageId).set(messageData);
                 
-                // Clear form
                 document.getElementById('contactForm').reset();
                 
                 showNotification('Message sent successfully! Admin will reply soon.');
                 
-                // Reload messages
                 loadUserMessages();
                 
             } catch (error) {
@@ -1925,35 +1875,23 @@
 
         // ========== PAGE NAVIGATION ==========
         function showPage(page) {
-            // Hide all pages
             document.querySelectorAll('.page').forEach(p => {
                 p.classList.remove('active');
             });
             
-            // Remove active class from all nav buttons
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            // Show selected page
             document.getElementById(page + '-page').classList.add('active');
-            
-            // Activate clicked nav button
             event.target.classList.add('active');
             
-            // Load page-specific data
             switch(page) {
-                case 'home':
-                    // Nothing special to load
-                    break;
                 case 'products':
                     loadProducts();
                     break;
                 case 'orders':
                     loadUserOrders();
-                    break;
-                case 'contact':
-                    // Contact form is ready
                     break;
                 case 'messages':
                     loadUserMessages();
@@ -1963,20 +1901,17 @@
                     break;
             }
             
-            // Close user menu if open
             closeUserMenu();
         }
 
         function filterOrders(status) {
             currentFilter = status;
             
-            // Update filter buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
             
-            // Load filtered orders
             loadUserOrders(status);
         }
 
@@ -2013,7 +1948,6 @@
             notification.className = `notification ${type === 'error' ? 'error' : ''}`;
             notification.style.display = 'block';
             
-            // Auto-hide after 3 seconds
             setTimeout(() => {
                 notification.style.display = 'none';
             }, 3000);
