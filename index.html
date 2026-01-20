@@ -53,11 +53,28 @@
             align-items: center;
             gap: 12px;
             cursor: pointer;
+            position: relative;
+        }
+        
+        /* SECRET ADMIN BUTTON (INVISIBLE) */
+        .secret-admin-trigger {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            top: -10px;
+            left: 0;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            opacity: 0;
+            z-index: 9999;
         }
         
         .logo i {
             font-size: 32px;
             color: var(--gold);
+            position: relative;
+            z-index: 1;
         }
         
         .logo h1 {
@@ -523,6 +540,44 @@
             margin-top: 30px;
         }
         
+        /* PASSWORD MODAL STYLES */
+        .password-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1002;
+        }
+        
+        .password-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid var(--gold);
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            background: #2a2a2a;
+            border: 1px solid var(--gold);
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -747,9 +802,31 @@
     </style>
 </head>
 <body>
+    <!-- Secret Password Modal -->
+    <div class="password-modal" id="passwordModal">
+        <div class="password-box">
+            <h3 style="color: var(--gold); margin-bottom: 10px;"><i class="fas fa-lock"></i> Admin Access</h3>
+            <p style="color: #888; margin-bottom: 15px;">Enter password to continue</p>
+            <input type="password" id="adminPassword" class="password-input" placeholder="Enter password" autocomplete="off">
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="checkAdminPassword()" style="flex: 1;">
+                    <i class="fas fa-check"></i> Submit
+                </button>
+                <button class="btn btn-secondary" onclick="closePasswordModal()" style="flex: 1;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+            <p style="color: #666; font-size: 12px; margin-top: 15px;">
+                <i class="fas fa-info-circle"></i> Only authorized personnel
+            </p>
+        </div>
+    </div>
+    
     <!-- Header -->
     <header class="header">
         <div class="logo" onclick="showPage('home')">
+            <!-- SECRET ADMIN BUTTON (INVISIBLE) -->
+            <button class="secret-admin-trigger" id="secretAdminBtn" title="Double-click for admin access"></button>
             <i class="fas fa-gem"></i>
             <h1>LuxeVault</h1>
         </div>
@@ -1054,6 +1131,8 @@
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let currentUser = null;
         let currentFilter = 'all';
+        let clickCount = 0;
+        let clickTimer = null;
 
         // ========== INITIALIZE APP ==========
         document.addEventListener('DOMContentLoaded', function() {
@@ -1065,7 +1144,61 @@
             
             // Update cart count
             updateCartCount();
+            
+            // Setup secret admin button
+            setupSecretAdminButton();
         });
+
+        // ========== SECRET ADMIN ACCESS ==========
+        function setupSecretAdminButton() {
+            const secretBtn = document.getElementById('secretAdminBtn');
+            
+            // Double-click detection
+            secretBtn.addEventListener('click', function() {
+                clickCount++;
+                
+                if (clickCount === 1) {
+                    clickTimer = setTimeout(function() {
+                        clickCount = 0; // Reset if single click
+                    }, 500);
+                } else if (clickCount === 2) {
+                    clearTimeout(clickTimer);
+                    openPasswordModal();
+                    clickCount = 0;
+                }
+            });
+            
+            // Right-click protection (optional)
+            secretBtn.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                openPasswordModal();
+            });
+        }
+
+        function openPasswordModal() {
+            document.getElementById('passwordModal').style.display = 'block';
+            document.getElementById('adminPassword').focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            
+            if (password === '048840') {
+                // Open admin panel in new tab
+                window.open('admin-panel.html', '_blank');
+                closePasswordModal();
+                showNotification('Admin access granted!');
+            } else {
+                showNotification('Incorrect password!', 'error');
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPassword').focus();
+            }
+        }
 
         // ========== AUTHENTICATION FUNCTIONS ==========
         function handleAuthStateChange(user) {
@@ -1555,17 +1688,21 @@
                     address: address
                 });
                 
+                // ✅ FIX 1: Clear cart after successful order
                 cart = [];
                 localStorage.removeItem('cart');
                 updateCartCount();
                 
+                // ✅ FIX 2: Close modals after order
                 closeCheckout();
                 closeCart();
                 
+                // ✅ FIX 3: Reset form
                 document.getElementById('checkoutForm').reset();
                 
                 showNotification(`Order #${orderId} placed successfully!`);
                 
+                // ✅ FIX 4: Load orders immediately
                 loadUserOrders();
                 
             } catch (error) {
@@ -1581,6 +1718,25 @@
             loadUserOrders();
             loadUserMessages();
             loadProfileInfo();
+            
+            // Real-time listeners for updates
+            setupRealTimeListeners();
+        }
+
+        function setupRealTimeListeners() {
+            // Real-time orders listener
+            db.collection('orders')
+                .where('userId', '==', currentUser.uid)
+                .onSnapshot((snapshot) => {
+                    loadUserOrders(currentFilter);
+                });
+            
+            // Real-time messages listener
+            db.collection('messages')
+                .where('userId', '==', currentUser.uid)
+                .onSnapshot((snapshot) => {
+                    loadUserMessages();
+                });
         }
 
         async function loadUserOrders(filter = currentFilter) {
@@ -1861,10 +2017,12 @@
                 
                 await db.collection('messages').doc(messageId).set(messageData);
                 
+                // ✅ FIX: Clear form immediately
                 document.getElementById('contactForm').reset();
                 
                 showNotification('Message sent successfully! Admin will reply soon.');
                 
+                // ✅ Load messages immediately
                 loadUserMessages();
                 
             } catch (error) {
@@ -1964,6 +2122,9 @@
             if (event.target.id === 'checkoutModal') {
                 closeCheckout();
             }
+            if (event.target.id === 'passwordModal') {
+                closePasswordModal();
+            }
             if (!event.target.closest('.user-details') && !event.target.closest('.user-menu')) {
                 closeUserMenu();
             }
@@ -1975,9 +2136,9 @@
                 closeCart();
                 closeAuth();
                 closeCheckout();
+                closePasswordModal();
             }
         });
     </script>
 </body>
 </html>
-
