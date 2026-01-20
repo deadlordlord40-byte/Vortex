@@ -1,17 +1,18 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LuxeVault Admin</title>
+    <title>LuxeVault | Premium Collection</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --gold: #FFD700;
+            --gold-dark: #D4AF37;
+            --gold-light: #FFED4E;
             --black: #0F0F0F;
             --gray: #1A1A1A;
             --card-bg: #1E1E1E;
@@ -29,83 +30,421 @@
         }
         
         body {
-            background: var(--black);
+            background-color: var(--black);
             color: var(--white);
-            padding: 20px;
+            line-height: 1.6;
+            min-height: 100vh;
         }
         
+        /* Header Styles - Same as before */
         .header {
-            text-align: center;
-            padding: 30px 0;
-            border-bottom: 3px solid var(--gold);
-            margin-bottom: 30px;
-        }
-        
-        .header h1 {
-            color: var(--gold);
-            font-size: 36px;
-        }
-        
-        .header p {
-            color: #888;
-            margin-top: 10px;
-        }
-        
-        .tabs {
+            background: var(--black);
+            padding: 20px 5%;
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--gold);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         
-        .tab-btn {
-            padding: 12px 24px;
-            background: var(--gray);
-            border: none;
-            color: #ccc;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        
+        .logo i {
+            font-size: 32px;
+            color: var(--gold);
+        }
+        
+        .logo h1 {
+            font-size: 28px;
+            background: linear-gradient(to right, var(--gold), var(--gold-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .login-btn {
+            background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+            color: var(--black);
+            padding: 10px 20px;
             border-radius: 6px;
             cursor: pointer;
+            border: none;
             font-weight: 600;
-            transition: all 0.3s;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .tab-btn.active {
-            background: var(--gold);
+        .login-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, var(--gold), var(--gold-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
             color: var(--black);
+            cursor: pointer;
         }
         
-        .tab-content {
+        .user-menu {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: var(--gray);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            padding: 10px;
             display: none;
+            z-index: 1000;
+            min-width: 200px;
         }
         
-        .tab-content.active {
+        .user-menu.active {
             display: block;
         }
         
-        .card {
+        .user-menu-item {
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-menu-item:hover {
+            background: var(--card-bg);
+        }
+        
+        .nav {
+            display: flex;
+            gap: 30px;
+            background: var(--gray);
+            padding: 15px 5%;
+            justify-content: center;
+            border-bottom: 1px solid #333;
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            color: #ccc;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            padding: 5px 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s;
+        }
+        
+        .nav-btn:hover, .nav-btn.active {
+            color: var(--gold);
+        }
+        
+        .nav-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--gold);
+        }
+        
+        .cart-btn {
+            position: relative;
+            font-size: 24px;
+            color: var(--gold);
+            cursor: pointer;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--red);
+            color: white;
+            font-size: 12px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .page {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .page.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), 
+                        url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            padding: 100px 5%;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .hero p {
+            font-size: 18px;
+            color: #ccc;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+            color: var(--black);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+        
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+            border: 1px solid #444;
+        }
+        
+        .btn-secondary:hover {
+            background: #222;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .container {
+            padding: 80px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section-title {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 50px;
+            color: white;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: var(--gold);
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--gold);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.1);
+        }
+        
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--gold);
+            color: var(--black);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1;
+        }
+        
+        .product-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .product-card:hover .product-img {
+            transform: scale(1.05);
+        }
+        
+        .product-info {
+            padding: 20px;
+        }
+        
+        .product-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: white;
+            min-height: 54px;
+        }
+        
+        .product-desc {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 15px;
+            height: 40px;
+            overflow: hidden;
+        }
+        
+        .product-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .product-actions .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+        }
+        
+        .orders-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .orders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--gray);
+            border: 1px solid #444;
+            color: #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background: var(--gold);
+            color: var(--black);
+            border-color: var(--gold);
+        }
+        
+        .order-card {
             background: var(--card-bg);
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
             border-left: 4px solid var(--gold);
+            transition: transform 0.3s;
         }
         
-        .card-header {
+        .order-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .order-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #333;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
-        .card-title {
-            font-size: 18px;
-            color: var(--gold);
-            font-weight: 600;
-        }
-        
-        .status-badge {
+        .order-status {
+            background: var(--gray);
+            color: white;
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 12px;
@@ -113,25 +452,69 @@
         }
         
         .status-pending { background: var(--gold); color: var(--black); }
-        .status-replied { background: var(--green); color: white; }
+        .status-processing { background: var(--blue); color: white; }
+        .status-delivered { background: var(--green); color: white; }
+        .status-cancelled { background: var(--red); color: white; }
         
-        .btn {
-            padding: 8px 16px;
+        .order-items {
+            margin: 15px 0;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .admin-reply {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 122, 255, 0.1);
+            border-left: 3px solid var(--blue);
+            border-radius: 4px;
+        }
+        
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
             border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: var(--gold);
-            color: var(--black);
-        }
-        
-        .btn-secondary {
-            background: var(--blue);
             color: white;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
         }
         
         .modal {
@@ -142,7 +525,8 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.95);
-            z-index: 1000;
+            z-index: 1001;
+            overflow-y: auto;
             padding: 20px;
         }
         
@@ -150,63 +534,502 @@
             background: var(--card-bg);
             max-width: 500px;
             margin: 50px auto;
-            padding: 30px;
-            border-radius: 10px;
+            border-radius: 12px;
+            overflow: hidden;
             border: 2px solid var(--gold);
+            animation: modalSlideIn 0.3s ease;
         }
         
-        textarea {
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            background: var(--gold);
+            color: var(--black);
+            padding: 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-close {
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--black);
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .google-btn {
+            background: white;
+            color: #757575;
+            border: 1px solid #ddd;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
             width: 100%;
-            padding: 12px;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .google-btn:hover {
+            background: #f8f8f8;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        
+        .google-btn:active {
+            transform: translateY(0);
+        }
+        
+        .cart-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100%;
+            background: var(--black);
+            z-index: 1000;
+            border-left: 2px solid var(--gold);
+        }
+        
+        .cart-header {
+            padding: 20px;
+            background: var(--gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cart-items {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .cart-total {
+            padding: 20px;
+            background: var(--gray);
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--gold);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .footer {
+            background: #0A0A0A;
+            padding: 50px 5% 20px;
+            margin-top: 50px;
+            border-top: 2px solid var(--gold);
+        }
+        
+        .copyright {
+            text-align: center;
+            color: #666;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--green);
             color: white;
-            margin: 10px 0 20px;
-            min-height: 150px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.error {
+            background: var(--red);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .auth-header h3 {
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            color: #888;
+            position: relative;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #444;
+        }
+        
+        .divider::before {
+            left: 0;
+        }
+        
+        .divider::after {
+            right: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .nav {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 15px;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .cart-modal {
+                width: 100%;
+            }
+            
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .section-title {
+                font-size: 28px;
+            }
+            
+            .orders-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .modal-content {
+                margin: 20px auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1><i class="fas fa-shield-alt"></i> LuxeVault Admin</h1>
-        <p>Manage Orders & Customer Messages</p>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo" onclick="showPage('home')">
+            <i class="fas fa-gem"></i>
+            <h1>LuxeVault</h1>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-details" id="userDetails" style="display: none;">
+                <div class="user-avatar" id="userAvatar" onclick="toggleUserMenu()">
+                    <!-- Avatar will be loaded by JavaScript -->
+                </div>
+                <div>
+                    <div id="userName">User</div>
+                    <div style="font-size: 12px; color: #888;" id="userEmail"></div>
+                </div>
+            </div>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-menu-item" onclick="showPage('profile')">
+                    <i class="fas fa-user"></i> Profile
+                </div>
+                <div class="user-menu-item" onclick="showPage('orders')">
+                    <i class="fas fa-box"></i> My Orders
+                </div>
+                <div class="user-menu-item" onclick="showPage('contact')">
+                    <i class="fas fa-envelope"></i> Contact
+                </div>
+                <div class="user-menu-item" onclick="showPage('messages')">
+                    <i class="fas fa-inbox"></i> My Messages
+                </div>
+                <div class="user-menu-item" onclick="logoutUser()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </div>
+            </div>
+            
+            <button class="cart-btn" onclick="openCart()">
+                <i class="fas fa-shopping-cart"></i>
+                <div class="cart-count">0</div>
+            </button>
+            
+            <button class="login-btn" onclick="openAuth()" id="loginButton">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+        </div>
+    </header>
+    
+    <!-- Navigation -->
+    <nav class="nav">
+        <button class="nav-btn active" onclick="showPage('home')">Home</button>
+        <button class="nav-btn" onclick="showPage('products')">Products</button>
+        <button class="nav-btn" onclick="showPage('orders')">My Orders</button>
+        <button class="nav-btn" onclick="showPage('contact')">Contact</button>
+        <button class="nav-btn" onclick="showPage('messages')">Messages</button>
+    </nav>
+    
+    <!-- Home Page -->
+    <div class="page active" id="home-page">
+        <section class="hero">
+            <h1>Premium Luxury Collection</h1>
+            <p>Discover exclusive luxury items curated for discerning collectors. Handcrafted perfection at your fingertips.</p>
+            <button class="btn btn-primary" onclick="showPage('products')">
+                <i class="fas fa-crown"></i> Shop Now
+            </button>
+        </section>
+        
+        <section class="container">
+            <h2 class="section-title">Why Choose LuxeVault?</h2>
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-info">
+                        <h3 class="product-title">Premium Quality</h3>
+                        <p class="product-desc">Every item is handpicked for its exceptional quality and craftsmanship.</p>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div class="product-info">
+                        <h3 class="product-title">Secure Shopping</h3>
+                        <p class="product-desc">Your data is protected with enterprise-grade security protocols.</p>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div class="product-info">
+                        <h3 class="product-title">24/7 Support</h3>
+                        <p class="product-desc">Our customer support team is always ready to assist you.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
     
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('orders')">📦 Orders</button>
-        <button class="tab-btn" onclick="showTab('messages')">📨 Messages</button>
+    <!-- Products Page -->
+    <div class="page" id="products-page">
+        <section class="container">
+            <h2 class="section-title">Premium Collection</h2>
+            <div class="products-grid" id="productsContainer">
+                <!-- Products loaded by JavaScript -->
+            </div>
+        </section>
     </div>
     
-    <!-- Orders Tab -->
-    <div class="tab-content active" id="orders-tab">
-        <div id="ordersContainer">
-            <p>Loading orders...</p>
+    <!-- Orders Page -->
+    <div class="page" id="orders-page">
+        <section class="container">
+            <div class="orders-header">
+                <h2 class="section-title" style="margin-bottom: 0;">My Orders</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterOrders('all')">All</button>
+                    <button class="filter-btn" onclick="filterOrders('Pending')">Pending</button>
+                    <button class="filter-btn" onclick="filterOrders('Processing')">Processing</button>
+                    <button class="filter-btn" onclick="filterOrders('Delivered')">Delivered</button>
+                </div>
+            </div>
+            <div class="orders-container" id="ordersContainer">
+                <!-- Orders will be loaded here -->
+            </div>
+        </section>
+    </div>
+    
+    <!-- Contact Page -->
+    <div class="page" id="contact-page">
+        <section class="container">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="contact-form">
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label>Your Name *</label>
+                        <input type="text" id="contactName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address *</label>
+                        <input type="email" id="contactEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number *</label>
+                        <input type="tel" id="contactPhone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Message *</label>
+                        <textarea id="contactMessage" rows="4" required placeholder="Tell us how we can help you..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" onclick="sendMessage()" style="flex: 1;">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Messages Page -->
+    <div class="page" id="messages-page">
+        <section class="container">
+            <h2 class="section-title">My Messages</h2>
+            <div class="orders-container" id="messagesContainer">
+                <!-- Messages will be loaded here -->
+            </div>
+        </section>
+    </div>
+    
+    <!-- Profile Page -->
+    <div class="page" id="profile-page">
+        <section class="container">
+            <h2 class="section-title">My Profile</h2>
+            <div class="orders-container">
+                <div class="order-card" id="profileInfo">
+                    <!-- Profile info will be loaded here -->
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div style="text-align: center;">
+            <p>© 2024 LuxeVault. All rights reserved.</p>
+            <p style="margin-top: 10px; font-size: 14px; color: #888;">
+                Premium Luxury E-commerce Platform
+            </p>
+        </div>
+    </footer>
+    
+    <!-- Cart Modal -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-header">
+            <h3>Your Cart</h3>
+            <div onclick="closeCart()" style="cursor: pointer; font-size: 24px;">×</div>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Cart items will be loaded here -->
+        </div>
+        <div class="cart-total">
+            <span>Total:</span>
+            <span id="cartTotal">₹0</span>
+        </div>
+        <div style="padding: 20px;">
+            <button class="btn btn-primary" onclick="openCheckout()" style="width: 100%;">
+                <i class="fas fa-shopping-bag"></i> Proceed to Checkout
+            </button>
         </div>
     </div>
     
-    <!-- Messages Tab -->
-    <div class="tab-content" id="messages-tab">
-        <div id="messagesContainer">
-            <p>Loading messages...</p>
-        </div>
-    </div>
-    
-    <!-- Reply Modal -->
-    <div class="modal" id="replyModal">
+    <!-- Auth Modal - GOOGLE ONLY -->
+    <div class="modal" id="authModal">
         <div class="modal-content">
-            <h3 style="color: var(--gold); margin-bottom: 20px;">Reply to Customer</h3>
-            <div id="messageDetails" style="margin-bottom: 20px;"></div>
-            <textarea id="replyText" placeholder="Type your reply here..."></textarea>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-primary" onclick="sendReply()">Send Reply</button>
-                <button class="btn" onclick="closeReplyModal()" style="background: #666; color: white;">Cancel</button>
+            <div class="modal-header">
+                <span>Welcome to LuxeVault</span>
+                <span class="modal-close" onclick="closeAuth()">×</span>
+            </div>
+            <div class="modal-body">
+                <div class="auth-header">
+                    <h3><i class="fas fa-gem"></i> Sign In</h3>
+                    <p style="color: #888;">Use your Google account to continue</p>
+                </div>
+                
+                <!-- Only Google Sign In -->
+                <button id="googleSignInBtn" class="google-btn" onclick="signInWithGoogle()">
+                    <i class="fab fa-google" style="color: #DB4437;"></i>
+                    Sign in with Google
+                </button>
+                
+                <div class="divider">Only Google Sign In Available</div>
+                
+                <div style="text-align: center; color: #888; font-size: 14px; padding: 15px; background: rgba(255,215,0,0.1); border-radius: 8px;">
+                    <i class="fas fa-info-circle"></i>
+                    <p style="margin-top: 5px;">For security, we only support Google Sign In.</p>
+                </div>
             </div>
         </div>
     </div>
+    
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Complete Your Order</span>
+                <span class="modal-close" onclick="closeCheckout()">×</span>
+            </div>
+            <div class="modal-body">
+                <div id="orderSummary" style="margin-bottom: 20px;"></div>
+                
+                <form id="checkoutForm">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="customerName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Phone Number *</label>
+                        <input type="tel" id="customerPhone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email Address *</label>
+                        <input type="email" id="customerEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Delivery Address *</label>
+                        <textarea id="customerAddress" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <select id="paymentMethod" required>
+                            <option value="cod" selected>Cash on Delivery</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" onclick="placeOrder()" style="flex: 2;">
+                            <i class="fas fa-check-circle"></i> Place Order
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeCheckout()" style="flex: 1;">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
 
     <script>
-        // Firebase Configuration
+        // ========== FIREBASE CONFIGURATION ==========
+        // ✅ FIXED CONFIG - yeh use karo
         const firebaseConfig = {
             apiKey: "AIzaSyDXd5OXhBIeK6ZgsGac2WApW6b5ctOP138",
             authDomain: "rootandshoot-25366.firebaseapp.com",
@@ -216,166 +1039,770 @@
             appId: "1:644099796079:web:6551da1de0a075fbeeb19a"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.firestore();
-        
-        let currentMessageId = null;
 
-        // Load data on page load
+        // Global Variables
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let currentUser = null;
+        let currentFilter = 'all';
+
+        // ========== INITIALIZE APP ==========
         document.addEventListener('DOMContentLoaded', function() {
-            loadOrders();
-            loadMessages();
+            console.log("App initialized");
+            
+            // Setup Firebase auth listener
+            auth.onAuthStateChanged(handleAuthStateChange);
+            
+            // Load products
+            loadProducts();
+            
+            // Update cart count
+            updateCartCount();
         });
 
-        function showTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            event.target.classList.add('active');
-            document.getElementById(tab + '-tab').classList.add('active');
-        }
-
-        async function loadOrders() {
-            try {
-                const snapshot = await db.collection('orders').orderBy('createdAt', 'desc').get();
-                const container = document.getElementById('ordersContainer');
+        // ========== AUTHENTICATION FUNCTIONS ==========
+        function handleAuthStateChange(user) {
+            if (user) {
+                console.log("User signed in:", user.email);
+                currentUser = {
+                    uid: user.uid,
+                    name: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                    photoURL: user.photoURL
+                };
                 
-                if (snapshot.empty) {
-                    container.innerHTML = '<p>No orders found</p>';
-                    return;
-                }
+                updateUserDisplay();
+                showNotification(`Welcome ${currentUser.name}!`);
                 
-                let html = '';
-                snapshot.forEach(doc => {
-                    const order = doc.data();
-                    html += `
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">Order #${order.id}</div>
-                                <span class="status-badge status-pending">${order.status}</span>
-                            </div>
-                            <div style="margin-bottom: 10px;">
-                                <div><strong>Customer:</strong> ${order.userName}</div>
-                                <div><strong>Email:</strong> ${order.userEmail}</div>
-                                <div><strong>Phone:</strong> ${order.userPhone}</div>
-                                <div><strong>Address:</strong> ${order.address}</div>
-                            </div>
-                            <div><strong>Total:</strong> ₹${order.total.toLocaleString()}</div>
-                        </div>
-                    `;
-                });
-                
-                container.innerHTML = html;
-            } catch (error) {
-                console.error("Error loading orders:", error);
+            } else {
+                console.log("User signed out");
+                currentUser = null;
+                updateUserDisplay();
             }
         }
 
-        async function loadMessages() {
+        async function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            
             try {
-                const snapshot = await db.collection('messages').orderBy('createdAt', 'desc').get();
-                const container = document.getElementById('messagesContainer');
+                const result = await auth.signInWithPopup(provider);
+                console.log("Google sign-in successful");
+                closeAuth();
                 
-                if (snapshot.empty) {
-                    container.innerHTML = '<p>No messages found</p>';
-                    return;
+                // Save user data
+                saveUserToFirestore(result.user);
+                
+            } catch (error) {
+                console.error("Google sign-in error:", error);
+                showNotification('Sign-in failed. Please try again.', 'error');
+            }
+        }
+
+        async function saveUserToFirestore(user) {
+            try {
+                const userRef = db.collection('users').doc(user.uid);
+                await userRef.set({
+                    name: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                console.log("User saved to Firestore");
+            } catch (error) {
+                console.error("Error saving user:", error);
+            }
+        }
+
+        function logoutUser() {
+            auth.signOut().then(() => {
+                showNotification('Logged out successfully');
+                showPage('home');
+            });
+        }
+
+        // ========== USER INTERFACE FUNCTIONS ==========
+        function updateUserDisplay() {
+            const userDetails = document.getElementById('userDetails');
+            const loginButton = document.getElementById('loginButton');
+            
+            if (currentUser) {
+                userDetails.style.display = 'flex';
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('userEmail').textContent = currentUser.email;
+                document.getElementById('userAvatar').innerHTML = `<span>${currentUser.name.charAt(0).toUpperCase()}</span>`;
+                
+                loginButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+                loginButton.onclick = logoutUser;
+            } else {
+                userDetails.style.display = 'none';
+                loginButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                loginButton.onclick = openAuth;
+            }
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('userMenu').classList.toggle('active');
+        }
+
+        function closeUserMenu() {
+            document.getElementById('userMenu').classList.remove('active');
+        }
+
+        // ========== PRODUCT FUNCTIONS ==========
+        function loadProducts() {
+            // Default products
+            products = [
+                {
+                    id: "1",
+                    name: "Golden Chronograph Watch",
+                    description: "Swiss automatic movement with sapphire crystal",
+                    price: 129999,
+                    image: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+                    category: "watches"
+                },
+                {
+                    id: "2",
+                    name: "Artisan Leather Oxford Shoes",
+                    description: "Hand-stitched premium Italian leather",
+                    price: 28999,
+                    image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+                    category: "shoes"
+                },
+                {
+                    id: "3",
+                    name: "Limited Edition Sunglasses",
+                    description: "Handcrafted acetate frames with polarized lenses",
+                    price: 18999,
+                    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+                    category: "accessories"
                 }
+            ];
+            
+            const container = document.getElementById('productsContainer');
+            container.innerHTML = '';
+            
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div style="position: relative; overflow: hidden;">
+                        <div class="product-badge">PREMIUM</div>
+                        <img src="${product.image}" alt="${product.name}" class="product-img">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">${product.name}</h3>
+                        <p class="product-desc">${product.description}</p>
+                        <div class="product-price">₹${product.price.toLocaleString()}</div>
+                        <div class="product-actions">
+                            <button class="btn btn-secondary" onclick="addToCart('${product.id}')">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>
+                            <button class="btn btn-primary" onclick="buyNow('${product.id}')">
+                                <i class="fas fa-bolt"></i> Buy Now
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ========== CART FUNCTIONS ==========
+        function addToCart(productId) {
+            if (!currentUser) {
+                showNotification('Please login first', 'error');
+                openAuth();
+                return;
+            }
+            
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                existingItem.quantity = (existingItem.quantity || 1) + 1;
+            } else {
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.image,
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            showNotification('Added to cart!');
+        }
+
+        function buyNow(productId) {
+            if (!currentUser) {
+                showNotification('Please login first', 'error');
+                openAuth();
+                return;
+            }
+            
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            cart = [{
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.image,
+                quantity: 1
+            }];
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            openCheckout();
+        }
+
+        function updateCartCount() {
+            const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            document.querySelector('.cart-count').textContent = totalItems;
+        }
+
+        function openCart() {
+            if (!currentUser) {
+                showNotification('Please login first', 'error');
+                openAuth();
+                return;
+            }
+            
+            const container = document.getElementById('cartItems');
+            container.innerHTML = '';
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Your cart is empty</p>';
+            } else {
+                let total = 0;
                 
-                let html = '';
-                snapshot.forEach(doc => {
-                    const msg = doc.data();
-                    html += `
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">From: ${msg.userName}</div>
-                                <span class="status-badge ${msg.replied ? 'status-replied' : 'status-pending'}">
-                                    ${msg.replied ? 'Replied' : 'Pending'}
-                                </span>
-                            </div>
-                            <div style="margin-bottom: 10px;">
-                                <div><strong>Email:</strong> ${msg.userEmail}</div>
-                                <div><strong>Phone:</strong> ${msg.userPhone}</div>
-                            </div>
-                            <div style="margin-bottom: 15px;">
-                                <strong>Message:</strong>
-                                <p style="margin-top: 5px; color: #ccc;">${msg.message}</p>
-                            </div>
-                            ${msg.replied ? `
-                                <div style="background: rgba(52,199,89,0.1); padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                                    <strong>Your Reply:</strong>
-                                    <p style="margin-top: 5px; color: #ccc;">${msg.reply}</p>
-                                </div>
-                            ` : ''}
-                            <button class="btn btn-primary" onclick="openReplyModal('${doc.id}')">
-                                ${msg.replied ? 'Edit Reply' : 'Reply'}
+                cart.forEach((item, index) => {
+                    const itemTotal = item.price * (item.quantity || 1);
+                    total += itemTotal;
+                    
+                    const cartItem = document.createElement('div');
+                    cartItem.style.cssText = `
+                        padding: 15px 0;
+                        border-bottom: 1px solid #333;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    `;
+                    cartItem.innerHTML = `
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500; margin-bottom: 5px;">${item.name}</div>
+                            <div style="font-size: 14px; color: #888;">Qty: ${item.quantity || 1}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: var(--gold); font-weight: 500;">₹${itemTotal.toLocaleString()}</div>
+                            <button onclick="removeFromCart(${index})" style="
+                                background: none;
+                                border: none;
+                                color: var(--red);
+                                cursor: pointer;
+                                padding: 5px;
+                                font-size: 14px;
+                            ">
+                                <i class="fas fa-trash"></i> Remove
                             </button>
                         </div>
                     `;
+                    container.appendChild(cartItem);
                 });
                 
-                container.innerHTML = html;
-            } catch (error) {
-                console.error("Error loading messages:", error);
+                document.getElementById('cartTotal').textContent = `₹${total.toLocaleString()}`;
             }
+            
+            document.getElementById('cartModal').style.display = 'block';
         }
 
-        function openReplyModal(messageId) {
-            currentMessageId = messageId;
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            openCart();
+            showNotification('Item removed from cart');
+        }
+
+        function closeCart() {
+            document.getElementById('cartModal').style.display = 'none';
+        }
+
+        // ========== CHECKOUT FUNCTIONS ==========
+        function openCheckout() {
+            if (!currentUser) {
+                showNotification('Please login first', 'error');
+                return;
+            }
             
-            // Load message details
-            db.collection('messages').doc(messageId).get().then(doc => {
-                if (doc.exists) {
-                    const msg = doc.data();
-                    document.getElementById('messageDetails').innerHTML = `
-                        <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 6px;">
-                            <strong>From: ${msg.userName}</strong><br>
-                            <div style="margin-top: 10px; color: #ccc;">${msg.message}</div>
+            if (cart.length === 0) {
+                showNotification('Your cart is empty', 'error');
+                return;
+            }
+            
+            let summary = '<h4 style="color: var(--gold); margin-bottom: 15px;">Order Summary:</h4>';
+            let total = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * (item.quantity || 1);
+                total += itemTotal;
+                
+                summary += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #333;">
+                        <div>
+                            <div>${item.name}</div>
+                            <div style="font-size: 12px; color: #888;">Qty: ${item.quantity || 1}</div>
                         </div>
-                    `;
-                    
-                    if (msg.replied) {
-                        document.getElementById('replyText').value = msg.reply || '';
-                    }
-                }
+                        <div style="color: var(--gold); font-weight: 500;">₹${itemTotal.toLocaleString()}</div>
+                    </div>
+                `;
             });
             
-            document.getElementById('replyModal').style.display = 'block';
-        }
-
-        function closeReplyModal() {
-            document.getElementById('replyModal').style.display = 'none';
-            document.getElementById('replyText').value = '';
-            currentMessageId = null;
-        }
-
-        async function sendReply() {
-            const replyText = document.getElementById('replyText').value.trim();
+            summary += `
+                <hr style="margin: 15px 0; border-color: #444;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 18px;">
+                    <span>Total:</span>
+                    <span>₹${total.toLocaleString()}</span>
+                </div>
+            `;
             
-            if (!replyText) {
-                alert('Please enter a reply');
+            document.getElementById('orderSummary').innerHTML = summary;
+            
+            // Auto-fill user info
+            if (currentUser) {
+                document.getElementById('customerName').value = currentUser.name;
+                document.getElementById('customerEmail').value = currentUser.email;
+            }
+            
+            document.getElementById('checkoutModal').style.display = 'block';
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkoutModal').style.display = 'none';
+            document.getElementById('checkoutForm').reset();
+        }
+
+        async function placeOrder() {
+            console.log("Placing order...");
+            
+            if (!currentUser) {
+                showNotification('Please login first', 'error');
+                return;
+            }
+            
+            if (cart.length === 0) {
+                showNotification('Cart is empty', 'error');
+                return;
+            }
+            
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            const email = document.getElementById('customerEmail').value.trim();
+            const address = document.getElementById('customerAddress').value.trim();
+            
+            if (!name || !phone || !email || !address) {
+                showNotification('Please fill all fields', 'error');
+                return;
+            }
+            
+            if (phone.length !== 10 || isNaN(phone)) {
+                showNotification('Please enter valid 10-digit phone', 'error');
                 return;
             }
             
             try {
-                await db.collection('messages').doc(currentMessageId).update({
-                    replied: true,
-                    reply: replyText,
-                    replyDate: firebase.firestore.FieldValue.serverTimestamp()
+                const orderId = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
+                const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+                
+                const orderData = {
+                    id: orderId,
+                    userId: currentUser.uid,
+                    userName: name,
+                    userEmail: email,
+                    userPhone: phone,
+                    address: address,
+                    paymentMethod: 'cod',
+                    items: cart.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity || 1,
+                        image: item.image
+                    })),
+                    total: total,
+                    status: 'Pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                console.log("Saving order to Firestore:", orderData);
+                
+                // ✅ SAVE ORDER TO FIRESTORE
+                await db.collection('orders').doc(orderId).set(orderData);
+                console.log("Order saved successfully!");
+                
+                // ✅ UPDATE USER ADDRESS
+                await db.collection('users').doc(currentUser.uid).update({
+                    phone: phone,
+                    address: address
                 });
                 
-                closeReplyModal();
-                alert('Reply sent successfully!');
-                loadMessages();
+                // ✅ FIXED: CLOSE MODALS FIRST
+                closeCheckout();
+                closeCart();
+                
+                // ✅ CLEAR CART
+                cart = [];
+                localStorage.removeItem('cart');
+                updateCartCount();
+                
+                // ✅ RESET FORM
+                document.getElementById('checkoutForm').reset();
+                
+                // ✅ SHOW SUCCESS MESSAGE
+                showNotification(`Order #${orderId} placed successfully!`);
+                
+                // ✅ LOAD ORDERS
+                loadUserOrders();
                 
             } catch (error) {
-                console.error("Error sending reply:", error);
-                alert('Error sending reply');
+                console.error("Error placing order:", error);
+                showNotification('Error placing order: ' + error.message, 'error');
             }
         }
+
+        // ========== MESSAGING FUNCTIONS ==========
+        async function sendMessage() {
+            console.log("Sending message...");
+            
+            if (!currentUser) {
+                showNotification('Please login first', 'error');
+                openAuth();
+                return;
+            }
+            
+            const name = document.getElementById('contactName').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const phone = document.getElementById('contactPhone').value.trim();
+            const message = document.getElementById('contactMessage').value.trim();
+            
+            if (!name || !email || !phone || !message) {
+                showNotification('Please fill all fields', 'error');
+                return;
+            }
+            
+            if (phone.length !== 10 || isNaN(phone)) {
+                showNotification('Please enter valid 10-digit phone', 'error');
+                return;
+            }
+            
+            try {
+                const messageId = 'MSG' + Date.now() + Math.floor(Math.random() * 1000);
+                
+                const messageData = {
+                    id: messageId,
+                    userId: currentUser.uid,
+                    userName: name,
+                    userEmail: email,
+                    userPhone: phone,
+                    message: message,
+                    replied: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                console.log("Saving message to Firestore:", messageData);
+                
+                // ✅ SAVE MESSAGE TO FIRESTORE
+                await db.collection('messages').doc(messageId).set(messageData);
+                console.log("Message saved successfully!");
+                
+                // ✅ FIXED: CLEAR FORM
+                document.getElementById('contactForm').reset();
+                
+                // ✅ SHOW SUCCESS MESSAGE
+                showNotification('Message sent! Admin will reply soon.');
+                
+                // ✅ LOAD MESSAGES
+                loadUserMessages();
+                
+            } catch (error) {
+                console.error("Error sending message:", error);
+                showNotification('Error sending message: ' + error.message, 'error');
+            }
+        }
+
+        // ========== USER DATA FUNCTIONS ==========
+        async function loadUserOrders() {
+            if (!currentUser) return;
+            
+            const container = document.getElementById('ordersContainer');
+            container.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Loading orders...</p>';
+            
+            try {
+                const snapshot = await db.collection('orders')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="order-card">
+                            <p style="text-align: center; color: #888;">No orders yet</p>
+                            <div style="text-align: center; margin-top: 15px;">
+                                <button class="btn btn-primary" onclick="showPage('products')">
+                                    <i class="fas fa-shopping-bag"></i> Start Shopping
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const order = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'order-card';
+                    card.innerHTML = `
+                        <div class="order-header">
+                            <div>
+                                <div style="font-weight: bold; color: var(--gold); font-size: 18px;">Order #${order.id}</div>
+                                <div style="font-size: 14px; color: #888;">
+                                    ${order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString() : 'Just now'}
+                                </div>
+                            </div>
+                            <div class="order-status status-${order.status.toLowerCase()}">
+                                ${order.status}
+                            </div>
+                        </div>
+                        
+                        <div class="order-items">
+                            <strong style="display: block; margin-bottom: 10px; color: #ccc;">Items:</strong>
+                            ${order.items.map(item => `
+                                <div class="order-item">
+                                    <div>${item.name} × ${item.quantity}</div>
+                                    <div style="color: var(--gold); font-weight: 500;">₹${(item.price * item.quantity).toLocaleString()}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <div style="margin-bottom: 5px;"><strong>Delivery Address:</strong> ${order.address}</div>
+                            <div><strong>Contact:</strong> ${order.userPhone}</div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #444;">
+                            <div style="font-size: 20px; font-weight: bold; color: var(--gold);">
+                                Total: ₹${order.total.toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+                
+            } catch (error) {
+                console.error("Error loading orders:", error);
+                container.innerHTML = '<div class="order-card"><p style="text-align: center; color: #888;">Error loading orders</p></div>';
+            }
+        }
+
+        async function loadUserMessages() {
+            if (!currentUser) return;
+            
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Loading messages...</p>';
+            
+            try {
+                const snapshot = await db.collection('messages')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="order-card">
+                            <p style="text-align: center; color: #888;">No messages yet</p>
+                            <div style="text-align: center; margin-top: 15px;">
+                                <button class="btn btn-primary" onclick="showPage('contact')">
+                                    <i class="fas fa-envelope"></i> Contact Admin
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const msg = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'order-card';
+                    card.innerHTML = `
+                        <div class="order-header">
+                            <div>
+                                <div style="font-weight: bold; color: var(--gold);">Message #${msg.id}</div>
+                                <div style="font-size: 14px; color: #888;">
+                                    ${msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleString() : 'Just now'}
+                                </div>
+                            </div>
+                            <div class="order-status ${msg.replied ? 'status-delivered' : 'status-pending'}">
+                                ${msg.replied ? 'Replied' : 'Pending'}
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 15px 0;">
+                            <strong>Your Message:</strong>
+                            <div style="margin-top: 5px; padding: 10px; background: rgba(255,215,0,0.1); border-radius: 4px;">
+                                ${msg.message}
+                            </div>
+                        </div>
+                        
+                        ${msg.replied ? `
+                            <div class="admin-reply">
+                                <strong><i class="fas fa-reply"></i> Admin's Reply:</strong>
+                                <div style="margin-top: 5px; color: #ccc;">${msg.reply || 'Thank you for your message!'}</div>
+                            </div>
+                        ` : ''}
+                    `;
+                    container.appendChild(card);
+                });
+                
+            } catch (error) {
+                console.error("Error loading messages:", error);
+                container.innerHTML = '<div class="order-card"><p style="text-align: center; color: #888;">Error loading messages</p></div>';
+            }
+        }
+
+        // ========== PAGE NAVIGATION ==========
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(page + '-page').classList.add('active');
+            
+            switch(page) {
+                case 'products':
+                    loadProducts();
+                    break;
+                case 'orders':
+                    loadUserOrders();
+                    break;
+                case 'messages':
+                    loadUserMessages();
+                    break;
+                case 'profile':
+                    loadProfileInfo();
+                    break;
+            }
+            
+            closeUserMenu();
+        }
+
+        function filterOrders(status) {
+            currentFilter = status;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            loadUserOrders(status);
+        }
+
+        async function loadProfileInfo() {
+            if (!currentUser) return;
+            
+            const container = document.getElementById('profileInfo');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 24px; margin: 0 auto 20px;">
+                        <span>${currentUser.name.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <h3 style="color: var(--gold); margin-bottom: 10px;">${currentUser.name}</h3>
+                    <p style="color: #888; margin-bottom: 20px;">${currentUser.email}</p>
+                    
+                    <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; color: var(--gold); font-weight: bold;" id="orderCount">0</div>
+                                <div style="font-size: 14px; color: #888;">Total Orders</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; color: var(--gold); font-weight: bold;" id="messageCount">0</div>
+                                <div style="font-size: 14px; color: #888;">Messages</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Load stats
+            try {
+                const ordersSnapshot = await db.collection('orders')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+                
+                const messagesSnapshot = await db.collection('messages')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+                
+                document.getElementById('orderCount').textContent = ordersSnapshot.size;
+                document.getElementById('messageCount').textContent = messagesSnapshot.size;
+                
+            } catch (error) {
+                console.error("Error loading profile stats:", error);
+            }
+        }
+
+        // ========== MODAL FUNCTIONS ==========
+        function openAuth() {
+            document.getElementById('authModal').style.display = 'block';
+        }
+
+        function closeAuth() {
+            document.getElementById('authModal').style.display = 'none';
+        }
+
+        // ========== UTILITY FUNCTIONS ==========
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.id === 'cartModal') closeCart();
+            if (event.target.id === 'authModal') closeAuth();
+            if (event.target.id === 'checkoutModal') closeCheckout();
+        };
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCart();
+                closeAuth();
+                closeCheckout();
+            }
+        });
     </script>
 </body>
 </html>
