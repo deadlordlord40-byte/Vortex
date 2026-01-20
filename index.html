@@ -652,16 +652,6 @@
             border-top: 1px solid #333;
         }
         
-        .admin-link {
-            color: var(--gold);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        
-        .admin-link:hover {
-            color: var(--gold-light);
-        }
-        
         .notification {
             position: fixed;
             bottom: 20px;
@@ -791,6 +781,9 @@
                 </div>
                 <div class="user-menu-item" onclick="showPage('messages')">
                     <i class="fas fa-inbox"></i> My Messages
+                </div>
+                <div class="user-menu-item" onclick="openAdminPanel()">
+                    <i class="fas fa-user-shield"></i> Admin Panel
                 </div>
                 <div class="user-menu-item" onclick="logoutUser()">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -934,14 +927,12 @@
         </section>
     </div>
     
-    <!-- Footer -->
+    <!-- Footer (Admin link REMOVED) -->
     <footer class="footer">
         <div style="text-align: center;">
             <p>© 2024 LuxeVault. All rights reserved.</p>
             <p style="margin-top: 10px; font-size: 14px; color: #888;">
-                <a href="admin.html" class="admin-link" style="text-decoration: none;">
-                    <i class="fas fa-lock"></i> Admin Panel
-                </a>
+                Premium Luxury E-commerce Platform
             </p>
         </div>
     </footer>
@@ -1230,6 +1221,11 @@
 
         function closeUserMenu() {
             document.getElementById('userMenu').classList.remove('active');
+        }
+
+        function openAdminPanel() {
+            // DIRECT FILE LINK - Works offline
+            window.open('admin.html', '_blank');
         }
 
         // ========== PRODUCT FUNCTIONS ==========
@@ -1599,9 +1595,9 @@
                 localStorage.removeItem('cart');
                 updateCartCount();
                 
-                // FIX: Close checkout modal after order placed
-                closeCheckout();
-                closeCart();
+                // ✅ FIXED: Close checkout modal after order placed
+                document.getElementById('checkoutModal').style.display = 'none';
+                document.getElementById('cartModal').style.display = 'none';
                 
                 // Reset form
                 document.getElementById('checkoutForm').reset();
